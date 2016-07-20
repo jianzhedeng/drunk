@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <io.h>
-// #include <stdlib.h>
+#include <stdlib.h>
 // #include <locale.h>
-// #include <string.h>
+#include <string.h>
 #include <direct.h>
 #pragma  warning(disable:4996)
 // void drunkMkDirs(char *dirPath)
@@ -141,8 +141,64 @@
 // 	return (0);
 // 
 // }
+
+int KMPTinS(char s[], char t[], int pos);
+
+
+void solveSearchLink(char *szLink)
+{
+
+}
 void getCatList(char *BookMarkFile)
 {
+	FILE *fp = NULL;
+	int fileSize = 0;
+	char *szTextContent = NULL;
+	int a1 = 0, a2 = 0;
+	char szLink[128] = { '\0' };
+
+	fp = fopen(BookMarkFile, "rt");
+	if (NULL != fp)
+	{
+		fseek(fp, 0, SEEK_END);
+		fileSize = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		//多出的一字节会被初始化为'\0'
+		szTextContent = (char *)calloc(fileSize + 1, sizeof(char));
+		if (szTextContent != NULL)
+		{
+			fread(szTextContent, sizeof(char), fileSize, fp);
+
+			//读取完毕，开始处理
+			while (1)
+			{
+				a1 = KMPTinS(szTextContent, "<DT><A HREF=\"http://www.meitulu.com", a1);
+				if (-1 == a1)
+				{
+					break;
+				}
+				a1 += strlen("<DT><A HREF=\"") + 7;
+				a2 = KMPTinS(szTextContent, "\" ", a1);
+				strncpy(szLink, szTextContent + a1, a2 - a1);
+				szLink[a2 - a1] = '\0';
+				if ('s' == szLink[16])
+				{
+					solveSearchLink(szLink);
+				} 
+				else
+				{
+					fprintf(stdout, "%s\n", szLink);
+				}
+			}
+
+
+			free(szTextContent);
+			szTextContent = NULL;
+		}
+		fclose(fp);
+		fp = NULL;
+	}
+
 
 }
 int main(int argc, char *argv[])
@@ -165,7 +221,11 @@ int main(int argc, char *argv[])
 	if (argc > 1)
 	{
 		getCatList(argv[1]);
-	}S
+	}
+	else
+	{ 
+		getCatList("C:/Users/deng/Desktop/bookmarks_16_7_15.html");
+	}
 
 	return (0);
 }
