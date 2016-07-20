@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <stdlib.h>
-// #include <locale.h>
+#include <locale.h>
 #include <string.h>
 #include <direct.h>
 #pragma  warning(disable:4996)
@@ -144,9 +144,114 @@
 
 int KMPTinS(char s[], char t[], int pos);
 
+void drunkUTF8ToGB2312(char *src, char *dst)
+{
+	//1.2版本
+	//经测试，生成wch使用+符号会出现bug，改成|位运算符
+	//位运算之前，使用&排除不参与运算的部分
+	int i, j;
+	char szTemp[12] = { '\0' };
+	int tmep;
+	wchar_t wch = '\0';
+
+	setlocale(LC_ALL, "");
+
+	for (i = 0, j = 0; *(src + i) != '\0' && *(src + i) != '\r' && *(src + i) != '\n';)
+	{
+		if ((((*(src + i)) & 0xf0) == 0xe0) &&
+			(((*(src + i + 1)) & 0xc0) == 0x80) &&
+			(((*(src + i + 2)) & 0xc0) == 0x80))
+		{
+			//三字节的汉字编码
+			(*(dst + j + 1)) = ((*(src + i + 2)) & 0x3f) + (((*(src + i + 1)) & 0x03) << 6);
+			(*(dst + j)) = (((*(src + i + 1)) & 0x3c) >> 2) + (((*(src + i)) & 0x0f) << 4);
+
+			wch = ((*(dst + j) & 0xff) << 8) | (*(dst + j + 1) & 0xff);
+			tmep = wctomb(szTemp, (wchar_t)wch);
+			(*(dst + j)) = szTemp[0];
+			(*(dst + j + 1)) = szTemp[1];
+
+			i += 3;
+			j += 2;
+			continue;
+		}
+		else if ((((*(src + i)) & 0xe0) == 0xc0) &&
+			(((*(src + i + 1)) & 0xc0) == 0x80))
+		{
+			//双字节的汉字编码
+			(*(dst + j + 1)) = ((*(src + i + 1)) & 0x3f) + (((*(src + i)) & 0x03) << 6);
+			(*(dst + j)) = ((*(src + i + 1)) & 0x1c) >> 2;
+
+			wch = ((*(dst + j) & 0xff) << 8) | (*(dst + j + 1) & 0xff);
+			wctomb(szTemp, wch);
+			(*(dst + j)) = szTemp[0];
+			(*(dst + j + 1)) = szTemp[1];
+
+			i += 2;
+			j += 2;
+			continue;
+		}
+		else if (((*(src + i)) & 0x80) == 0)
+		{
+			//askii字符
+			*(dst + j) = *(src + i);
+			++i;
+			++j;
+			continue;
+		}
+		++i;
+
+	}
+	*(dst + j) = '\0';
+	//i是src的字节总数
+}
 
 void solveSearchLink(char *szLink)
 {
+	char szLinkUTF8[128] = { '\0' }, szLinkGB2312[128] = { '\0' };
+	int i = 0, j = 0;
+	for (i = 0, j = 0; *(szLink + i) != '\0'; )
+	{
+		if ('%' == *(szLink + i))
+		{
+			if ('a' <= *(szLink + i + 1))
+			{
+				*(szLinkUTF8 + j) = ((*(szLink + i + 1) - 'a' + 10) & 0x0f) << 4;
+			}
+			else if ('A' <= *(szLink + i + 1))
+			{
+				*(szLinkUTF8 + j) = ((*(szLink + i + 1) - 'A' + 10) & 0x0f) << 4;
+			}
+			else if ('0' <= *(szLink + i + 1))
+			{
+				*(szLinkUTF8 + j) = ((*(szLink + i + 1) - '0') & 0x0f) << 4;
+			}
+
+			if ('a' <= *(szLink + i + 2))
+			{
+				*(szLinkUTF8 + j) = *(szLinkUTF8 + j) | ((*(szLink + i + 2) - 'a' + 10) & 0x0f);
+			}
+			else if ('A' <= *(szLink + i + 2))
+			{
+				*(szLinkUTF8 + j) = *(szLinkUTF8 + j) | ((*(szLink + i + 2) - 'A' + 10) & 0x0f);
+			}
+			else if ('0' <= *(szLink + i + 2))
+			{
+				*(szLinkUTF8 + j) = *(szLinkUTF8 + j) | ((*(szLink + i + 2) - '0') & 0x0f);
+			}
+
+			++j;
+			i += 3;
+		}
+		else
+		{
+			*(szLinkUTF8 + j++) = *(szLink + i++);
+		}
+	}
+	//开始处理utf8字符串
+	drunkUTF8ToGB2312(szLinkUTF8, szLinkGB2312);
+
+	fprintf(stderr, "%s\n", szLinkGB2312);
 
 }
 void getCatList(char *BookMarkFile)
