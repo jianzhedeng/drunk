@@ -208,7 +208,10 @@ void drunkUTF8ToGB2312(char *src, char *dst)
 
 void solveSearchLink(char *szLink)
 {
-	char szLinkUTF8[128] = { '\0' }, szLinkGB2312[128] = { '\0' };
+	char szLinkUTF8[128] = { '\0' }, 
+		szLinkGB2312[128] = { '\0' }, 
+		szOutDir[128] = { '\0' }, 
+		szLinkInBat[128] = { '\0' };
 	int i = 0, j = 0;
 	for (i = 0, j = 0; *(szLink + i) != '\0'; )
 	{
@@ -251,7 +254,34 @@ void solveSearchLink(char *szLink)
 	//开始处理utf8字符串
 	drunkUTF8ToGB2312(szLinkUTF8, szLinkGB2312);
 
-	fprintf(stderr, "%s\n", szLinkGB2312);
+	//生成路径;j在此处作为flag
+	for (i = (int)strlen(szLinkGB2312) - 1; i >= 0; --i)
+	{
+		if ('/' == *(szLinkGB2312 + i))
+		{
+			*(szOutDir + i) = '\\';
+			continue;
+		}
+		*(szOutDir + i) = *(szLinkGB2312 + i);
+	}
+	*(szOutDir + strlen(szLinkGB2312)) = '\\';
+	*(szOutDir + strlen(szLinkGB2312) + 1) = '\0';
+
+	//bat脚本中%作为转义字符，%用%%表示
+	for (i = 0, j = 0; *(szLink + i) != '\0'; ++i, ++j)
+	{
+		*(szLinkInBat + j) = *(szLink + i);
+		if ('%' == *(szLink + i))
+		{
+			*(szLinkInBat + ++j) = '%';
+		}
+	}
+	*(szLinkInBat + j) = '\0';
+
+	fprintf(stderr, ">nul 2>&1 md %%outdir%%%s\n" 
+		">>%%outdir%%wget.log 2>>&1 wget -N -O %%outdir%%%sindex.html  %s\n", 
+		szOutDir, 
+		szOutDir, szLinkInBat);
 
 }
 void getCatList(char *BookMarkFile)
@@ -290,7 +320,7 @@ void getCatList(char *BookMarkFile)
 				{
 					solveSearchLink(szLink);
 				} 
-				else
+				else if ('t' == szLink[16])
 				{
 					fprintf(stdout, "%s\n", szLink);
 				}
@@ -326,10 +356,6 @@ int main(int argc, char *argv[])
 	if (argc > 1)
 	{
 		getCatList(argv[1]);
-	}
-	else
-	{ 
-		getCatList("C:/Users/deng/Desktop/bookmarks_16_7_15.html");
 	}
 
 	return (0);
