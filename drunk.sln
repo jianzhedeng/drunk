@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getDLList", "meitul
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getCatList", "meitulu-getCatList\meitulu-getCatList.vcxproj", "{4B9A445A-ABC2-48F9-8F4A-9A70850706A3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getXcopyBat", "meitulu-getXcopyBat\meitulu-getXcopyBat.vcxproj", "{9426BC22-7E14-4F57-A04F-93DC1B396E6C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -33,6 +35,10 @@ Global
 		{4B9A445A-ABC2-48F9-8F4A-9A70850706A3}.Debug|Win32.Build.0 = Debug|Win32
 		{4B9A445A-ABC2-48F9-8F4A-9A70850706A3}.Release|Win32.ActiveCfg = Release|Win32
 		{4B9A445A-ABC2-48F9-8F4A-9A70850706A3}.Release|Win32.Build.0 = Release|Win32
+		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Debug|Win32.Build.0 = Debug|Win32
+		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Release|Win32.ActiveCfg = Release|Win32
+		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
