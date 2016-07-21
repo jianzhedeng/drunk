@@ -282,6 +282,7 @@ void solveSearchLink(char *szLink)
 		">>%%outdir%%wget.log 2>>&1 wget -N -O %%outdir%%%sindex.html  %s\n", 
 		szOutDir, 
 		szOutDir, szLinkInBat);
+	fprintf(stdout, "%s/\n", szLinkGB2312);
 
 }
 void getCatList(char *BookMarkFile)
