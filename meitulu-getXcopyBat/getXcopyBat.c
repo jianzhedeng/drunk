@@ -155,7 +155,7 @@ void getXcopyBat(char *listFile, char *mirrorDir, char *objDir)
 }
 int main(int argc, char *argv[])
 {
-// 	getXcopybat();
+	getXcopyBat("./normallist.txt", "./", "./obj/item/");
 
 	return (0);
 }
