@@ -72,7 +72,9 @@ int drunkstrlen(char *str)
 }
 void drunkUTF8ToGB2312(char *src, char *dst)
 {
-	//未在本工程中测试，待补充。
+	//1.2版本
+	//经测试，生成wch使用+符号会出现bug，改成|位运算符
+	//位运算之前，使用&排除不参与运算的部分
 	int i, j;
 	char szTemp[12] = { '\0' };
 	int tmep;
@@ -90,7 +92,7 @@ void drunkUTF8ToGB2312(char *src, char *dst)
 			(*(dst + j + 1)) = ((*(src + i + 2)) & 0x3f) + (((*(src + i + 1)) & 0x03) << 6);
 			(*(dst + j)) = (((*(src + i + 1)) & 0x3c) >> 2) + (((*(src + i)) & 0x0f) << 4);
 
-			wch = ((*(dst + j)) << 8) + (*(dst + j + 1));
+			wch = ((*(dst + j) & 0xff) << 8) | (*(dst + j + 1) & 0xff);
 			tmep = wctomb(szTemp, (wchar_t)wch);
 			(*(dst + j)) = szTemp[0];
 			(*(dst + j + 1)) = szTemp[1];
@@ -106,7 +108,7 @@ void drunkUTF8ToGB2312(char *src, char *dst)
 			(*(dst + j + 1)) = ((*(src + i + 1)) & 0x3f) + (((*(src + i)) & 0x03) << 6);
 			(*(dst + j)) = ((*(src + i + 1)) & 0x1c) >> 2;
 
-			wch = ((*(dst + j)) << 8) + (*(dst + j + 1));
+			wch = ((*(dst + j) & 0xff) << 8) | (*(dst + j + 1) & 0xff);
 			wctomb(szTemp, wch);
 			(*(dst + j)) = szTemp[0];
 			(*(dst + j + 1)) = szTemp[1];
@@ -244,11 +246,12 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 	if (NULL != outfp)
 	{
 		FILE *fp = NULL;
-		char szOutBuf[1024] = { '\0' }, szTemp[1024] = { '\0' };
+		char szOutBuf[1024] = { '\0' }, szTemp[1024] = { '\0' }, szAlbumName[1024] = { '\0' };
 		int fileSize = 0;
 		char *szInBuf = NULL;
 		int a1 = 0, a2 = 0;
-		int iTemp = 0;
+		int iTemp = 0, i2 = 0;
+		int ab1 = 0, ab2 = 0;
 		fp = fopen(FilePath, "rt");
 		if (NULL != fp)
 		{
@@ -267,8 +270,42 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				//需要string.h头文件
 				if (a1 >= 0 && a2 >= 0)
 				{
-					strncpy(szTemp, szInBuf + a1, a2 - a1);
+					strncpy(szAlbumName, szInBuf + a1, a2 - a1);
+					drunkUTF8ToGB2312(szAlbumName, szTemp);
 					sprintf(szOutBuf, "%sTitle: %s\n", szOutBuf, szTemp);
+					//get Album name
+					for (iTemp = 0; *(szTemp + iTemp) != '\0' && (ab1 == 0 || ab2 == 0); ++iTemp)
+					{
+						if (0 == ab1 && *(szTemp + iTemp) == ']')
+						{
+							ab1 = iTemp + 1;
+						}
+						if (0 == ab2 && *(szTemp + iTemp) == ' ')
+						{
+							if (iTemp > 0 && *(szTemp + iTemp - 1) >= '0' && *(szTemp + iTemp - 1) <= '9')
+							{
+								ab2 = iTemp + 1;
+							}
+						}
+					}
+					//ab1取ab1和ab2中最大的那个
+					if (ab1 < ab2)
+					{
+						ab1 = ab2;
+					}
+					for (iTemp = ab1; *(szTemp + iTemp) != '\0'; ++iTemp)
+					{
+						*(szAlbumName + iTemp - ab1) = *(szTemp + iTemp);
+					}
+					i2 = iTemp - ab1;
+					*(szAlbumName + i2++) = ' ';
+					for (iTemp = 0; iTemp < ab1; ++iTemp, ++i2)
+					{
+						*(szAlbumName + i2) = *(szTemp + iTemp);
+					}
+					*(szAlbumName + i2) = '\0';
+
+					sprintf(szOutBuf, "%sAlbumName: %s\n", szOutBuf, szAlbumName);
 				}
 
 				drunkGB2312ToUTF8("图片数量：", szTemp);
@@ -307,7 +344,7 @@ void drunkMkDirs(char *dirPath)
 	}
 	_mkdir(curDirPath);
 }
-int getImgList(char *szDir, char *szFilter)
+int getImgList(char *szDir, char *szFilter, char *objItemPath)
 {
 	//传入的szDir应包含'/'作为结尾，并以'\0'终结
 	struct _finddata_t files;
@@ -318,7 +355,7 @@ int getImgList(char *szDir, char *szFilter)
 	int pageNum = 0;
 	char chTemp = 0;
 	char szTemp[1024] = { '\0' };
-	char objItemPath[] = { "obj/item/" };
+// 	char objItemPath[] = {  };
 	FILE *objItemFP = NULL;
 	sprintf(szTemp, "%s%s", szDir, szFilter);
 	File_Handle = _findfirst(szTemp, &files);
@@ -369,7 +406,7 @@ int getImgList(char *szDir, char *szFilter)
 void main(int argc, char *argv[])
 {
 
-	getImgList("www.meitulu.com/item/", "*.html");
+	getImgList("./www.meitulu.com/item/", "*.html", "./obj/www.meitulu.com/item/");
 }
 
 
