@@ -157,6 +157,8 @@ void getXcopyBat(char *CatListFile, char *objDir)
 	{
 		int fileSize = 0;
 		char *szTemp2 = NULL;
+		int iCurChar = 0;
+		char szTemp[1024] = { '\0' };
 		fseek(fp, 0, SEEK_END);
 		fileSize = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
@@ -166,7 +168,13 @@ void getXcopyBat(char *CatListFile, char *objDir)
 			fread(szTemp2, sizeof(char), fileSize, fp);
 			//∂¡»°ÕÍ±œ
 			//////////////////////////////////////////////////////////////////////////
+			for (iCurChar = 0; iCurChar < fileSize; )
+			{
+				sscanf(szTemp2 + iCurChar, "%s", szTemp);
+				iCurChar += strlen(szTemp) + strlen("\n");
 
+				printf("");
+			}
 
 			//////////////////////////////////////////////////////////////////////////
 			free(szTemp2);
@@ -177,7 +185,7 @@ void getXcopyBat(char *CatListFile, char *objDir)
 }
 int main(int argc, char *argv[])
 {
-	getXcopyBat("./normallist.txt", "./");
+	getXcopyBat("./normallist.txt", "./obj/");
 
 	return (0);
 }
