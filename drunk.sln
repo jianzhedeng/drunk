@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getCatList", "meitu
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getXcopyBat", "meitulu-getXcopyBat\meitulu-getXcopyBat.vcxproj", "{9426BC22-7E14-4F57-A04F-93DC1B396E6C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "meitulu-getAlbumList", "meitulu-getAlbumList\meitulu-getAlbumList.vcxproj", "{8E27D505-851C-4A6A-9F1F-170038FABA4B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -39,6 +41,10 @@ Global
 		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Debug|Win32.Build.0 = Debug|Win32
 		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Release|Win32.ActiveCfg = Release|Win32
 		{9426BC22-7E14-4F57-A04F-93DC1B396E6C}.Release|Win32.Build.0 = Release|Win32
+		{8E27D505-851C-4A6A-9F1F-170038FABA4B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8E27D505-851C-4A6A-9F1F-170038FABA4B}.Debug|Win32.Build.0 = Debug|Win32
+		{8E27D505-851C-4A6A-9F1F-170038FABA4B}.Release|Win32.ActiveCfg = Release|Win32
+		{8E27D505-851C-4A6A-9F1F-170038FABA4B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

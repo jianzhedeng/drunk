@@ -14,7 +14,7 @@ int getPageNum(char *filePath)
 	if (fp != NULL)
 	{
 		int fileSize = 0;
-		int _iFlag = 0;
+		int _iFlag = 0, iTemp = 0;
 		int a1 = 0, a2 = 0, b1 = 0, b2 = 0, tb1 = 0;
 		char *szTemp2 = NULL;
 		fseek(fp, 0, SEEK_END);
@@ -26,7 +26,7 @@ int getPageNum(char *filePath)
 			fread(szTemp2, sizeof(char), fileSize, fp);
 
 			//读取完毕，开始KMP
-			a1 = KMPTinS(szTemp2, "<center><div id=\"pages\">", 0);
+			a1 = KMPTinS(szTemp2, "<center><div id=\"pages\"", 0);
 			if (a1 >= 0)
 			{
 				a2 = KMPTinS(szTemp2, "</div></center>", a1);
@@ -37,27 +37,31 @@ int getPageNum(char *filePath)
 						tb1 = KMPTinS(szTemp2, "<a href=\"", tb1 + 1))
 					{
 						b1 = tb1;
-					}
-					if (b1 >= 0)
-					{
-						b2 = KMPTinS(szTemp2, "\">", b1);
-						if (b2 >= 0)
+						if (b1 >= 0)
 						{
-							//找到int了
-							sscanf(szTemp2 + b2 + 2, "%d", &_iFlag);
-							fclose(fp);
-							return (_iFlag);
+							b2 = KMPTinS(szTemp2, "\">", b1);
+							if (b2 >= 0)
+							{
+								//找到int了
+								sscanf(szTemp2 + b2 + 2, "%d", &iTemp);
+								if (iTemp > 0)
+								{
+									_iFlag = iTemp;
+								}
+							}
 						}
 					}
 				}
-
-				free(szTemp2);
-				szTemp2 = NULL;
 			}
+			free(szTemp2);
+			szTemp2 = NULL;
 		}
-
 		fclose(fp);
-
+		fp = NULL;
+		if (_iFlag > 0)
+		{
+			return (_iFlag);
+		}
 	}
 	return (-1);
 }
@@ -139,7 +143,7 @@ void drunkGB2312ToUTF8(char *src, char *dst)
 	int sLen = 0;
 	int dLen = 0;
 	int i, j;
-// 	wchar_t wcTemp[100] = { '\0' };
+	// 	wchar_t wcTemp[100] = { '\0' };
 	wchar_t *wcTemp = NULL;
 	sLen = drunkstrlen(src);
 	if (sLen > 0)
@@ -154,20 +158,20 @@ void drunkGB2312ToUTF8(char *src, char *dst)
 			//Unicode编码转uft8编码
 			for (i = 0, j = 0; i < dLen; ++i)
 			{
-				if (0x7f == (* (wcTemp + i) | 0x7f))
+				if (0x7f == (*(wcTemp + i) | 0x7f))
 				{
 					//一个字节utf8编码
 					*(dst + j) = *(wcTemp + i) & 0x7f;
 					++j;
 				}
-				else if (0x07ff  == (* (wcTemp + i) | 0x07ff))
+				else if (0x07ff == (*(wcTemp + i) | 0x07ff))
 				{
 					//2个字节utf8编码
 					*(dst + j) = ((*(wcTemp + i) & 0x07c0) >> 5) | 0xc0;
 					*(dst + j + 1) = (*(wcTemp + i) & 0x3f) | 0x80;
 					j += 2;
 				}
-				else if (0xffff == (* (wcTemp + i) | 0xffff))
+				else if (0xffff == (*(wcTemp + i) | 0xffff))
 				{
 					//3个字节utf8编码
 					//避免wchar_t不是16位才做了上方判断
@@ -212,7 +216,7 @@ void writeImageURL(char *FilePath, FILE *outfp)
 				z1 = KMPTinS(szInBuf, "<div class=\"content\">", 0);
 				z1 += strlen("<div class=\"content\">");
 				z2 = KMPTinS(szInBuf, "</div>", z1);
-				for (a1 = z1 ; (1); )
+				for (a1 = z1; (1);)
 				{
 					a1 = KMPTinS(szInBuf, "<center><img src=", a1);
 					if (a1 > z2 || a1 == (-1))
@@ -246,7 +250,7 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 	if (NULL != outfp)
 	{
 		FILE *fp = NULL;
-		char szOutBuf[1024] = { '\0' }, szTemp[1024] = { '\0' }, szAlbumName[1024] = { '\0' };
+		char szOutBuf[1024] = { '\0' }, szTemp[1024] = { '\0' }, szModelName[1024] = { '\0' };
 		int fileSize = 0;
 		char *szInBuf = NULL;
 		int a1 = 0, a2 = 0;
@@ -255,7 +259,7 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 		fp = fopen(FilePath, "rt");
 		if (NULL != fp)
 		{
-			
+
 			fseek(fp, 0, SEEK_END);
 			fileSize = ftell(fp);
 			fseek(fp, 0, SEEK_SET);
@@ -270,53 +274,33 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				//需要string.h头文件
 				if (a1 >= 0 && a2 >= 0)
 				{
-					strncpy(szAlbumName, szInBuf + a1, a2 - a1);
-					drunkUTF8ToGB2312(szAlbumName, szTemp);
+					strncpy(szModelName, szInBuf + a1, a2 - a1);
+					drunkUTF8ToGB2312(szModelName, szTemp);
 					sprintf(szOutBuf, "%sTitle: %s\n", szOutBuf, szTemp);
-					//get Album name
-					for (iTemp = 0; *(szTemp + iTemp) != '\0' && (ab1 == 0 || ab2 == 0); ++iTemp)
-					{
-						if (0 == ab1 && *(szTemp + iTemp) == ']')
-						{
-							ab1 = iTemp + 1;
-						}
-						if (0 == ab2 && *(szTemp + iTemp) == ' ')
-						{
-							if (iTemp > 0 && *(szTemp + iTemp - 1) >= '0' && *(szTemp + iTemp - 1) <= '9')
-							{
-								ab2 = iTemp + 1;
-							}
-						}
-					}
-					//ab1取ab1和ab2中最大的那个
-					if (ab1 < ab2)
-					{
-						ab1 = ab2;
-					}
-					for (iTemp = ab1; *(szTemp + iTemp) != '\0'; ++iTemp)
-					{
-						*(szAlbumName + iTemp - ab1) = *(szTemp + iTemp);
-					}
-					i2 = iTemp - ab1;
-					*(szAlbumName + i2++) = ' ';
-					for (iTemp = 0; iTemp < ab1; ++iTemp, ++i2)
-					{
-						*(szAlbumName + i2) = *(szTemp + iTemp);
-					}
-					*(szAlbumName + i2) = '\0';
 
-					sprintf(szOutBuf, "%sAlbumName: %s\n", szOutBuf, szAlbumName);
+					//找到：(全角)符号开始处理，没找到则从a1开始处理
+					drunkGB2312ToUTF8("：", szTemp);
+					iTemp = KMPTinS(szInBuf, szTemp, a1);
+					if (iTemp != (-1) && iTemp < a2)
+					{
+						a1 = iTemp + strlen(szTemp);
+					}
+
+					for (iTemp = a1; iTemp < a2 && 
+						*(szInBuf + iTemp) != ' ' && 
+						*(szInBuf + iTemp) != '_' && 
+						*(szInBuf + iTemp) != '|'; ++iTemp)
+					{
+						*(szModelName + iTemp - a1) = *(szInBuf + iTemp);
+					}
+					*(szModelName + iTemp - a1) = '\0';
+
+					drunkUTF8ToGB2312(szModelName, szTemp);
+					sprintf(szOutBuf, "%sModelName: %s\n", szOutBuf, szTemp);
+
 				}
 
-				drunkGB2312ToUTF8("图片数量：", szTemp);
-				a1 = KMPTinS(szInBuf, szTemp, 0);
-				a1 += strlen(szTemp);
-				sscanf(szInBuf + a1, "%d", &iTemp);
-				if (iTemp > 0)
-				{
-					sprintf(szOutBuf, "%sImageNumber: %d \n", szOutBuf, iTemp);
-				}
-
+// 				printf("%s", szOutBuf);
 				fputs(szOutBuf, outfp);
 
 				free(szInBuf);
@@ -344,7 +328,7 @@ void drunkMkDirs(char *dirPath)
 	}
 	_mkdir(curDirPath);
 }
-int getImgList(char *szDir, char *szFilter, char *objItemPath)
+int getAlbumList(char *szDir, char *indexFile, char *objFileDir)
 {
 	//传入的szDir应包含'/'作为结尾，并以'\0'终结
 	struct _finddata_t files;
@@ -355,42 +339,33 @@ int getImgList(char *szDir, char *szFilter, char *objItemPath)
 	int pageNum = 0;
 	char chTemp = 0;
 	char szTemp[1024] = { '\0' };
-// 	char objItemPath[] = {  };
+	// 	char objItemPath[] = {  };
 	FILE *objItemFP = NULL;
-	sprintf(szTemp, "%s%s", szDir, szFilter);
+	//迭代创建-.txt文件所在的文件夹
+	drunkMkDirs(objFileDir);
+	//遍历指定目录中的子目录
+	sprintf(szTemp, "%s*", szDir);
 	File_Handle = _findfirst(szTemp, &files);
 	if (File_Handle == -1)
 	{
-		printf("error\n");
+// 		printf("error\n");
 		return 0;
 	}
 	do
 	{
-		//处理之
-		// 		printf("%s \n", files.name);
-		sscanf(files.name, "%d%c", &iTemp, &chTemp);
-		if ((0 < iTemp) && ('.' == chTemp))
+		if ((files.attrib & (_A_SUBDIR)) && strcmp(files.name, ".") && strcmp(files.name, ".."))
 		{
-
-			sprintf(szTemp, "%s%s", szDir, files.name);
-			pageNum = getPageNum(szTemp);
-			//生成新文件的路径
-			sprintf(szTemp, "%s%d-.txt", objItemPath, iTemp);
-			drunkMkDirs(objItemPath);
+			//是文件夹，并且不是.或..的文件夹
+			printf("");
+			//生成-.txt文件的路径
+			sprintf(szTemp, "%s%s-.txt", objFileDir, files.name);
 			objItemFP = fopen(szTemp, "wt");
 			if (NULL != objItemFP)
 			{
-				//分析基础信息
-				sprintf(szTemp, "%s%s", szDir, files.name);
+				sprintf(szTemp, "%s%s/%s", szDir, files.name, indexFile);
+				pageNum = getPageNum(szTemp);
+				
 				writeBasicInfo(szTemp, objItemFP);
-				//获取Img url
-				writeImageURL(szTemp, objItemFP);
-				for (j = 2; j <= pageNum; ++j)
-				{
-					sprintf(szTemp, "%s%d_%d.html", szDir, iTemp, j);
-					writeImageURL(szTemp, objItemFP);
-				}
-
 
 				fclose(objItemFP);
 				objItemFP = NULL;
@@ -402,11 +377,14 @@ int getImgList(char *szDir, char *szFilter, char *objItemPath)
 	// 	printf("Find %d files\n", i);
 
 	return (0);
+
 }
 void main(int argc, char *argv[])
 {
 
-	getImgList("./www.meitulu.com/item/", "*.html", "./obj/www.meitulu.com/item/");
+// 	getImgList("./www.meitulu.com/item/", "*.html", "./obj/www.meitulu.com/item/");
+	getAlbumList("./www.meitulu.com/search/", "index.html", "./obj/www.meitulu.com/search/");
+	getAlbumList("./www.meitulu.com/t/", "index.html", "./obj/www.meitulu.com/t/");
+
+
 }
-
-
