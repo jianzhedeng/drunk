@@ -8,61 +8,6 @@
 #pragma  warning(disable:4996)
 
 int KMPTinS(char s[], char t[], int pos);
-int getPageNum(char *filePath)
-{
-	FILE *fp = NULL;
-	fp = fopen(filePath, "rt");
-	if (fp != NULL)
-	{
-		int fileSize = 0;
-		int _iFlag = 0;
-		int a1 = 0, a2 = 0, b1 = 0, b2 = 0, tb1 = 0;
-		char *szTemp2 = NULL;
-		fseek(fp, 0, SEEK_END);
-		fileSize = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		szTemp2 = (char *)calloc(fileSize + 1, sizeof(char));
-		if (NULL != szTemp2)
-		{
-			fread(szTemp2, sizeof(char), fileSize, fp);
-
-			//读取完毕，开始KMP
-			a1 = KMPTinS(szTemp2, "<center><div id=\"pages\">", 0);
-			if (a1 >= 0)
-			{
-				a2 = KMPTinS(szTemp2, "</div></center>", a1);
-				if (a2 >= 0)
-				{
-					for (tb1 = a1;
-						tb1 <= a2 && tb1 != -1;
-						tb1 = KMPTinS(szTemp2, "<a href=\"", tb1 + 1))
-					{
-						b1 = tb1;
-					}
-					if (b1 >= 0)
-					{
-						b2 = KMPTinS(szTemp2, "\">", b1);
-						if (b2 >= 0)
-						{
-							//找到int了
-							sscanf(szTemp2 + b2 + 2, "%d", &_iFlag);
-							fclose(fp);
-							return (_iFlag);
-						}
-					}
-				}
-
-				free(szTemp2);
-				szTemp2 = NULL;
-			}
-		}
-
-		fclose(fp);
-
-	}
-	return (-1);
-}
-
 void drunkPushbackFormatStr(char *_Dset, char *_Format, ...)
 {
 	//注意，使用该函数，请确保dst的空间足够大，否则将发生越界访问
@@ -202,60 +147,75 @@ void drunkGB2312ToUTF8(char *src, char *dst)
 
 
 }
-void writeImageURL(char *FilePath, FILE *outfp)
+void drunkMkDirs(char *dirPath)
 {
-	if (NULL != outfp)
+	char curDirPath[1024] = { '\0' };
+	int i = 0, len = strlen(dirPath);
+	for (i = 0; i < len; ++i)
 	{
-		FILE *fp = NULL;
-		char szOutBuf[65536] = { '\0' }, szTemp[1024] = { '\0' };
-		int fileSize = 0;
-		char *szInBuf = NULL;
-		int z1 = 0, z2 = 0, a1 = 0, a2 = 0;
-		int iTemp = 0;
-		fp = fopen(FilePath, "rt");
-		if (NULL != fp)
+		*(curDirPath + i) = *(dirPath + i);
+		if (*(curDirPath + i) == '/' || *(curDirPath + i) == '\\')
 		{
+			//需要direct.h 头文件
+			_mkdir(curDirPath);
+		}
+	}
+	_mkdir(curDirPath);
+}
+int getPageNum(char *filePath)
+{
+	FILE *fp = NULL;
+	fp = fopen(filePath, "rt");
+	if (fp != NULL)
+	{
+		int fileSize = 0;
+		int _iFlag = 0;
+		int a1 = 0, a2 = 0, b1 = 0, b2 = 0, tb1 = 0;
+		char *szTemp2 = NULL;
+		fseek(fp, 0, SEEK_END);
+		fileSize = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		szTemp2 = (char *)calloc(fileSize + 1, sizeof(char));
+		if (NULL != szTemp2)
+		{
+			fread(szTemp2, sizeof(char), fileSize, fp);
 
-			fseek(fp, 0, SEEK_END);
-			fileSize = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			szInBuf = (char *)calloc(fileSize + 1, sizeof(char));
-			if (NULL != szInBuf)
+			//读取完毕，开始KMP
+			a1 = KMPTinS(szTemp2, "<center><div id=\"pages\">", 0);
+			if (a1 >= 0)
 			{
-				fread(szInBuf, sizeof(char), fileSize, fp);
-				//读取完毕，开始分析信息
-				z1 = KMPTinS(szInBuf, "<div class=\"content\">", 0);
-				z1 += strlen("<div class=\"content\">");
-				z2 = KMPTinS(szInBuf, "</div>", z1);
-				for (a1 = z1 ; (1); )
+				a2 = KMPTinS(szTemp2, "</div></center>", a1);
+				if (a2 >= 0)
 				{
-					a1 = KMPTinS(szInBuf, "<center><img src=", a1);
-					if (a1 > z2 || a1 == (-1))
+					for (tb1 = a1;
+						tb1 <= a2 && tb1 != -1;
+						tb1 = KMPTinS(szTemp2, "<a href=\"", tb1 + 1))
 					{
-						break;
+						b1 = tb1;
 					}
-					a1 += strlen("<center><img src=");
-					a2 = KMPTinS(szInBuf, "alt", a1);
-					if (a1 >= 0 && a2 >= 0)
+					if (b1 >= 0)
 					{
-						strncpy(szTemp, szInBuf + a1, a2 - a1);
-// 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
-						drunkPushbackFormatStr(szOutBuf, szTemp);
+						b2 = KMPTinS(szTemp2, "\">", b1);
+						if (b2 >= 0)
+						{
+							//找到int了
+							sscanf(szTemp2 + b2 + 2, "%d", &_iFlag);
+						}
 					}
 				}
 
-				fputs(szOutBuf, outfp);
-
-				free(szInBuf);
-				szInBuf = NULL;
+				free(szTemp2);
+				szTemp2 = NULL;
 			}
+		}
+		fclose(fp);
 
-
-			fclose(fp);
-			fp = NULL;
+		if (_iFlag > 0)
+		{
+			return (_iFlag);
 		}
 	}
-
+	return (-1);
 }
 void writeBasicInfo(char *FilePath, FILE *outfp)
 {
@@ -358,20 +318,60 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 		}
 	}
 }
-void drunkMkDirs(char *dirPath)
+void writeImageURL(char *FilePath, FILE *outfp)
 {
-	char curDirPath[1024] = { '\0' };
-	int i = 0, len = strlen(dirPath);
-	for (i = 0; i < len; ++i)
+	if (NULL != outfp)
 	{
-		*(curDirPath + i) = *(dirPath + i);
-		if (*(curDirPath + i) == '/' || *(curDirPath + i) == '\\')
+		FILE *fp = NULL;
+		char szOutBuf[65536] = { '\0' }, szTemp[1024] = { '\0' };
+		int fileSize = 0;
+		char *szInBuf = NULL;
+		int z1 = 0, z2 = 0, a1 = 0, a2 = 0;
+		int iTemp = 0;
+		fp = fopen(FilePath, "rt");
+		if (NULL != fp)
 		{
-			//需要direct.h 头文件
-			_mkdir(curDirPath);
+
+			fseek(fp, 0, SEEK_END);
+			fileSize = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+			szInBuf = (char *)calloc(fileSize + 1, sizeof(char));
+			if (NULL != szInBuf)
+			{
+				fread(szInBuf, sizeof(char), fileSize, fp);
+				//读取完毕，开始分析信息
+				z1 = KMPTinS(szInBuf, "<div class=\"content\">", 0);
+				z1 += strlen("<div class=\"content\">");
+				z2 = KMPTinS(szInBuf, "</div>", z1);
+				for (a1 = z1 ; (1); )
+				{
+					a1 = KMPTinS(szInBuf, "<center><img src=", a1);
+					if (a1 > z2 || a1 == (-1))
+					{
+						break;
+					}
+					a1 += strlen("<center><img src=");
+					a2 = KMPTinS(szInBuf, "alt", a1);
+					if (a1 >= 0 && a2 >= 0)
+					{
+						strncpy(szTemp, szInBuf + a1, a2 - a1);
+// 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
+						drunkPushbackFormatStr(szOutBuf, szTemp);
+					}
+				}
+
+				fputs(szOutBuf, outfp);
+
+				free(szInBuf);
+				szInBuf = NULL;
+			}
+
+
+			fclose(fp);
+			fp = NULL;
 		}
 	}
-	_mkdir(curDirPath);
+
 }
 int getImgList(char *szDir, char *szFilter, char *objItemPath)
 {
@@ -400,20 +400,18 @@ int getImgList(char *szDir, char *szFilter, char *objItemPath)
 	do
 	{
 		//处理之
-		// 		printf("%s \n", files.name);
 		sscanf(files.name, "%d%c", &iTemp, &chTemp);
 		if ((0 < iTemp) && ('.' == chTemp))
 		{
-
-			sprintf(szTemp, "%s%s", szDir, files.name);
-			pageNum = getPageNum(szTemp);
 			//生成新文件的路径
 			sprintf(szTemp, "%s%d-.txt", objItemPath, iTemp);
 			objItemFP = fopen(szTemp, "wt");
 			if (NULL != objItemFP)
 			{
-				//分析基础信息
 				sprintf(szTemp, "%s%s", szDir, files.name);
+				//获取页数
+				pageNum = getPageNum(szTemp);
+				//分析基础信息
 				writeBasicInfo(szTemp, objItemFP);
 				//获取Img url
 				writeImageURL(szTemp, objItemFP);
