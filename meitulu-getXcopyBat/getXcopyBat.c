@@ -151,14 +151,16 @@ void solveSearchLink(char *szLink)
 }
 void getXcopyBat(char *CatListFile, char *objDir)
 {
-	FILE *fp = NULL;
+	FILE *fp = NULL, *modelFP = NULL, *albumFP = NULL;
 	fp = fopen(CatListFile, "rt");
 	if (fp != NULL)
 	{
-		int fileSize = 0;
-		char *szTemp2 = NULL;
+		int fileSize = 0, modelFileSize = 0, albumFileSize = 0;
+		char *szTemp2 = NULL, *szModleFileBuf = NULL, *szAlbumFileBuf = NULL;
 		int iCurChar = 0;
-		char szTemp[1024] = { '\0' };
+		char szTemp[1024] = { '\0' },
+			szModel[1024] = { '\0' },
+			szAlbum[1024] = { '\0' };
 		fseek(fp, 0, SEEK_END);
 		fileSize = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
@@ -167,20 +169,32 @@ void getXcopyBat(char *CatListFile, char *objDir)
 		{
 			fread(szTemp2, sizeof(char), fileSize, fp);
 			//读取完毕
-			//////////////////////////////////////////////////////////////////////////
+			//1Start////////////////////////////////////////////////////////////////////////
 			for (iCurChar = 0; iCurChar < fileSize; )
 			{
 				sscanf(szTemp2 + iCurChar, "%s", szTemp);
 				iCurChar += strlen(szTemp) + strlen("\n");
 
-				printf("");
-			}
+				// 得到album的filePath
+				szTemp[strlen(szTemp) - 1] = '\0';
+				sprintf(szModel, "%s%s-.txt", objDir, szTemp);
 
-			//////////////////////////////////////////////////////////////////////////
+				modelFP = fopen(szModel, "rt");
+				if (NULL != modelFP)
+				{
+
+
+
+					fclose(modelFP);
+					modelFP = NULL;
+				}
+			}
+			//1End////////////////////////////////////////////////////////////////////////
 			free(szTemp2);
 			szTemp2 = NULL;
 		}
 		fclose(fp);
+		fp = NULL;
 	}
 }
 int main(int argc, char *argv[])
