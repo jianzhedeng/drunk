@@ -157,7 +157,7 @@ void getXcopyBat(char *CatListFile, char *objDir)
 	{
 		int fileSize = 0, modelFileSize = 0, albumFileSize = 0;
 		char *szTemp2 = NULL, *szModleFileBuf = NULL, *szAlbumFileBuf = NULL;
-		int iCurChar = 0;
+		int iCurChar = 0, iModelFileCurChar = 0, iAlbumFileCurChar = 0;
 		char szTemp[1024] = { '\0' },
 			szModel[1024] = { '\0' },
 			szAlbum[1024] = { '\0' };
@@ -182,9 +182,20 @@ void getXcopyBat(char *CatListFile, char *objDir)
 				modelFP = fopen(szModel, "rt");
 				if (NULL != modelFP)
 				{
+					fseek(modelFP, 0, SEEK_END);
+					modelFileSize = ftell(modelFP);
+					fseek(modelFP, 0, SEEK_SET);
+					szModleFileBuf = (char *)calloc(modelFileSize + 1, sizeof(char));
+					if (NULL != szModleFileBuf)
+					{
+						fread(szModleFileBuf, sizeof(char), modelFileSize, modelFP);
+						//2Start////////////////////////////////////////////////////////////////////////
+						sscanf(szModleFileBuf, "%[^'\n']", szTemp);
+						//2End////////////////////////////////////////////////////////////////////////
 
-
-
+						free(szModleFileBuf);
+						szModleFileBuf = NULL;
+					}
 					fclose(modelFP);
 					modelFP = NULL;
 				}
