@@ -249,19 +249,22 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 					strncpy(szAlbumName, szInBuf + a1, a2 - a1);
 					drunkUTF8ToGB2312(szAlbumName, szTemp);
 					drunkPushbackFormatStr(szOutBuf, "Title: %s\n", szTemp);
-					//get Album name
-					for (iTemp = 0; *(szTemp + iTemp) != '\0' && (ab1 == 0 || ab2 == 0); ++iTemp)
+					//get Album name , 用i2标记经过的空格数量
+					for (iTemp = 0, i2 = 0; *(szTemp + iTemp) != '\0' && (ab1 == 0 || ab2 == 0); ++iTemp)
 					{
-						if (0 == ab1 && *(szTemp + iTemp) == ' ')
+						if (*(szTemp + iTemp) == ' ')
 						{
-							if (iTemp > 0 && *(szTemp + iTemp - 1) == ']')
+							++i2;
+							if (i2 > 2)
+							{
+								//第二个空格之后的就不必管了
+								break;
+							}
+							if (0 == ab1 && iTemp > 0 && *(szTemp + iTemp - 1) == ']')
 							{
 								ab1 = iTemp + 1;
 							}
-						}
-						if (0 == ab2 && *(szTemp + iTemp) == ' ')
-						{
-							if (iTemp > 0 && *(szTemp + iTemp - 1) >= '0' && *(szTemp + iTemp - 1) <= '9')
+							if (0 == ab2 && iTemp > 0 && *(szTemp + iTemp - 1) >= '0' && *(szTemp + iTemp - 1) <= '9')
 							{
 								ab2 = iTemp + 1;
 							}
@@ -356,7 +359,7 @@ void writeImageURL(char *FilePath, FILE *outfp)
 					{
 						strncpy(szTemp, szInBuf + a1, a2 - a1);
 // 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
-						drunkPushbackFormatStr(szOutBuf, szTemp);
+						drunkPushbackFormatStr(szOutBuf, "%s\n", szTemp);
 					}
 				}
 

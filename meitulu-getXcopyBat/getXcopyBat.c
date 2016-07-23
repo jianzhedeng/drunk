@@ -151,7 +151,29 @@ void solveSearchLink(char *szLink)
 }
 void getXcopyBat(char *CatListFile, char *objDir)
 {
+	FILE *fp = NULL;
+	fp = fopen(CatListFile, "rt");
+	if (fp != NULL)
+	{
+		int fileSize = 0;
+		char *szTemp2 = NULL;
+		fseek(fp, 0, SEEK_END);
+		fileSize = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		szTemp2 = (char *)calloc(fileSize + 1, sizeof(char));
+		if (NULL != szTemp2)
+		{
+			fread(szTemp2, sizeof(char), fileSize, fp);
+			//∂¡»°ÕÍ±œ
+			//////////////////////////////////////////////////////////////////////////
 
+
+			//////////////////////////////////////////////////////////////////////////
+			free(szTemp2);
+			szTemp2 = NULL;
+		}
+		fclose(fp);
+	}
 }
 int main(int argc, char *argv[])
 {
