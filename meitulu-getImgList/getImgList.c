@@ -4,6 +4,7 @@
 #include <locale.h>
 #include <string.h>
 #include <direct.h>
+#include <stdarg.h>
 #pragma  warning(disable:4996)
 
 int KMPTinS(char s[], char t[], int pos);
@@ -62,6 +63,20 @@ int getPageNum(char *filePath)
 	return (-1);
 }
 
+void drunkPushbackFormatStr(char *_Dset, char *_Format, ...)
+{
+	//注意，使用该函数，请确保dst的空间足够大，否则将发生越界访问
+	//注意，请确保格式化后的字符串长度小于65535，否则将发生溢出
+	char tmpBuf[65536] = { '\0' };
+	va_list	args = NULL;
+	//需要stdarg.h头文件
+	va_start(args, _Format);
+	vsprintf(tmpBuf, _Format, args);
+	va_end(args);
+	//需要string.h头文件
+	strcat(_Dset, tmpBuf);
+// 	vsprintf()
+}
 int drunkstrlen(char *str)
 {
 	int i;
@@ -224,7 +239,8 @@ void writeImageURL(char *FilePath, FILE *outfp)
 					if (a1 >= 0 && a2 >= 0)
 					{
 						strncpy(szTemp, szInBuf + a1, a2 - a1);
-						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
+// 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
+						drunkPushbackFormatStr(szOutBuf, szTemp);
 					}
 				}
 
@@ -272,13 +288,16 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				{
 					strncpy(szAlbumName, szInBuf + a1, a2 - a1);
 					drunkUTF8ToGB2312(szAlbumName, szTemp);
-					sprintf(szOutBuf, "%sTitle: %s\n", szOutBuf, szTemp);
+					drunkPushbackFormatStr(szOutBuf, "Title: %s\n", szTemp);
 					//get Album name
 					for (iTemp = 0; *(szTemp + iTemp) != '\0' && (ab1 == 0 || ab2 == 0); ++iTemp)
 					{
-						if (0 == ab1 && *(szTemp + iTemp) == ']')
+						if (0 == ab1 && *(szTemp + iTemp) == ' ')
 						{
-							ab1 = iTemp + 1;
+							if (iTemp > 0 && *(szTemp + iTemp - 1) == ']')
+							{
+								ab1 = iTemp + 1;
+							}
 						}
 						if (0 == ab2 && *(szTemp + iTemp) == ' ')
 						{
@@ -288,24 +307,33 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 							}
 						}
 					}
-					//ab1取ab1和ab2中最大的那个
-					if (ab1 < ab2)
+					if ((0 == ab2) && (0 == ab1))
 					{
-						ab1 = ab2;
-					}
-					for (iTemp = ab1; *(szTemp + iTemp) != '\0'; ++iTemp)
+						//不需要变序
+// 						sprintf(szOutBuf, "%sAlbumName: %s\n", szOutBuf, szTemp);
+						drunkPushbackFormatStr(szOutBuf, "AlbumName: %s\n", szTemp);
+					} 
+					else
 					{
-						*(szAlbumName + iTemp - ab1) = *(szTemp + iTemp);
+						//ab1取ab1和ab2中最大的那个
+						if (ab1 < ab2)
+						{
+							ab1 = ab2;
+						}
+						for (iTemp = ab1; *(szTemp + iTemp) != '\0'; ++iTemp)
+						{
+							*(szAlbumName + iTemp - ab1) = *(szTemp + iTemp);
+						}
+						i2 = iTemp - ab1;
+						*(szAlbumName + i2++) = ' ';
+						for (iTemp = 0; iTemp < ab1; ++iTemp, ++i2)
+						{
+							*(szAlbumName + i2) = *(szTemp + iTemp);
+						}
+						*(szAlbumName + i2) = '\0';
+	
+						drunkPushbackFormatStr(szOutBuf, "AlbumName: %s\n", szAlbumName);
 					}
-					i2 = iTemp - ab1;
-					*(szAlbumName + i2++) = ' ';
-					for (iTemp = 0; iTemp < ab1; ++iTemp, ++i2)
-					{
-						*(szAlbumName + i2) = *(szTemp + iTemp);
-					}
-					*(szAlbumName + i2) = '\0';
-
-					sprintf(szOutBuf, "%sAlbumName: %s\n", szOutBuf, szAlbumName);
 				}
 
 				drunkGB2312ToUTF8("图片数量：", szTemp);
@@ -314,7 +342,8 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				sscanf(szInBuf + a1, "%d", &iTemp);
 				if (iTemp > 0)
 				{
-					sprintf(szOutBuf, "%sImageNumber: %d \n", szOutBuf, iTemp);
+// 					sprintf(szOutBuf, "%sImageNumber: %d \n", szOutBuf, iTemp);
+					drunkPushbackFormatStr(szOutBuf, "ImageNumber: %d \n", iTemp);
 				}
 
 				fputs(szOutBuf, outfp);
@@ -357,6 +386,10 @@ int getImgList(char *szDir, char *szFilter, char *objItemPath)
 	char szTemp[1024] = { '\0' };
 // 	char objItemPath[] = {  };
 	FILE *objItemFP = NULL;
+
+	//迭代创建obj目录
+	drunkMkDirs(objItemPath);
+
 	sprintf(szTemp, "%s%s", szDir, szFilter);
 	File_Handle = _findfirst(szTemp, &files);
 	if (File_Handle == -1)
@@ -376,7 +409,6 @@ int getImgList(char *szDir, char *szFilter, char *objItemPath)
 			pageNum = getPageNum(szTemp);
 			//生成新文件的路径
 			sprintf(szTemp, "%s%d-.txt", objItemPath, iTemp);
-			drunkMkDirs(objItemPath);
 			objItemFP = fopen(szTemp, "wt");
 			if (NULL != objItemFP)
 			{

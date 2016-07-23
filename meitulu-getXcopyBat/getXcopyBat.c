@@ -149,13 +149,13 @@ void solveSearchLink(char *szLink)
 	fprintf(stdout, "%s/\n", szLinkGB2312);
 
 }
-void getXcopyBat(char *listFile, char *mirrorDir, char *objDir)
+void getXcopyBat(char *CatListFile, char *objDir)
 {
 
 }
 int main(int argc, char *argv[])
 {
-	getXcopyBat("./normallist.txt", "./", "./obj/item/");
+	getXcopyBat("./normallist.txt", "./");
 
 	return (0);
 }

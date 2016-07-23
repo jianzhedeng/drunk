@@ -191,7 +191,7 @@ void drunkGB2312ToUTF8(char *src, char *dst)
 
 
 }
-void writeImageURL(char *FilePath, FILE *outfp)
+void writeAlbumURL(char *FilePath, FILE *outfp)
 {
 	if (NULL != outfp)
 	{
@@ -213,18 +213,20 @@ void writeImageURL(char *FilePath, FILE *outfp)
 			{
 				fread(szInBuf, sizeof(char), fileSize, fp);
 				//读取完毕，开始分析信息
-				z1 = KMPTinS(szInBuf, "<div class=\"content\">", 0);
-				z1 += strlen("<div class=\"content\">");
-				z2 = KMPTinS(szInBuf, "</div>", z1);
+				z1 = KMPTinS(szInBuf, "<ul class=\"img\">\n<li>", 0);
+				z1 += strlen("<ul class=\"img\">");
+				z2 = KMPTinS(szInBuf, "</ul>", z1);
 				for (a1 = z1; (1);)
 				{
-					a1 = KMPTinS(szInBuf, "<center><img src=", a1);
+					//<li>
+// 					<a href = "
+					a1 = KMPTinS(szInBuf, "<li>\n<a href=\"", a1);
 					if (a1 > z2 || a1 == (-1))
 					{
 						break;
 					}
-					a1 += strlen("<center><img src=");
-					a2 = KMPTinS(szInBuf, "alt", a1);
+					a1 += strlen("<li>\n<a href=\"");
+					a2 = KMPTinS(szInBuf, "\" ", a1);
 					if (a1 >= 0 && a2 >= 0)
 					{
 						strncpy(szTemp, szInBuf + a1, a2 - a1);
@@ -366,6 +368,13 @@ int getAlbumList(char *szDir, char *indexFile, char *objFileDir)
 				pageNum = getPageNum(szTemp);
 				
 				writeBasicInfo(szTemp, objItemFP);
+
+				writeAlbumURL(szTemp, objItemFP);
+				for (i = 2; i <= pageNum; ++i)
+				{
+					sprintf(szTemp, "%s%s/%d.html", szDir, files.name, i);
+					writeAlbumURL(szTemp, objItemFP);
+				}
 
 				fclose(objItemFP);
 				objItemFP = NULL;
