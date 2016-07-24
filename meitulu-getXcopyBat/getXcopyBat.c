@@ -168,11 +168,13 @@ void getXcopyBat(char *CatListFile, char *objDir)
 		if (NULL != szTemp2)
 		{
 			fread(szTemp2, sizeof(char), fileSize, fp);
+			//以t方式打开的文本，/r/n自动转换为/n，应以strlen更新长度
+			fileSize = strlen(szTemp2);
 			//读取完毕
 			//1Start////////////////////////////////////////////////////////////////////////
 			for (iCurChar = 0; iCurChar < fileSize; )
 			{
-				sscanf(szTemp2 + iCurChar, "%s", szTemp);
+				sscanf(szTemp2 + iCurChar, "%[^'\n']", szTemp);
 				iCurChar += strlen(szTemp) + strlen("\n");
 
 				// 得到album的filePath
@@ -189,8 +191,58 @@ void getXcopyBat(char *CatListFile, char *objDir)
 					if (NULL != szModleFileBuf)
 					{
 						fread(szModleFileBuf, sizeof(char), modelFileSize, modelFP);
+						//以t方式打开的文本，/r/n自动转换为/n，应以strlen更新长度
+						modelFileSize = strlen(szModleFileBuf);
 						//2Start////////////////////////////////////////////////////////////////////////
-						sscanf(szModleFileBuf, "%[^'\n']", szTemp);
+						iModelFileCurChar = 0;
+						//先读取第二行获得ModelName
+						sscanf(szModleFileBuf + iModelFileCurChar, 
+							"%*[^'\n']%*['\n']"
+							"%*s %[^'\n']%*['\n']%n", 
+							szModel, &iModelFileCurChar);
+						for (; iModelFileCurChar < modelFileSize; )
+						{
+							sscanf(szModleFileBuf + iModelFileCurChar, "%[^'\n']", szTemp);
+							iModelFileCurChar += strlen(szTemp) + strlen("\n");
+							
+							strncpy(szAlbum, 
+								szTemp + strlen("http://"), 
+								strlen(szTemp) - strlen("http://") - strlen(".html"));
+							*(szAlbum + strlen(szTemp) - strlen("http://") - strlen(".html")) = '\0';
+							strcat(szAlbum, "-.txt");
+							printf("");
+
+							albumFP = fopen(szAlbum, "rt");
+							if (NULL != albumFP)
+							{
+								fseek(albumFP, 0, SEEK_END);
+								albumFileSize = ftell(albumFP);
+								fseek(albumFP, 0, SEEK_SET);
+								szAlbumFileBuf = (char *)calloc(albumFileSize + 1, sizeof(char));
+								if (NULL != szAlbumFileBuf)
+								{
+									fread(szAlbumFileBuf, sizeof(char), albumFileSize, albumFP);
+									//以t方式打开的文本，/r/n自动转换为/n，应以strlen更新长度
+									albumFileSize = strlen(szAlbumFileBuf);
+
+									//3Start////////////////////////////////////////////////////////////////////////
+
+									//3End////////////////////////////////////////////////////////////////////////
+
+									free(szAlbumFileBuf);
+									szAlbumFileBuf = NULL;
+								}
+
+								fclose(albumFP);
+								albumFP = NULL;
+							}
+							else
+							{
+								//该文件打不开，输出到错误流，szAlbum在此情况下是文件路径
+								fprintf(stderr, "%s\n", szAlbum);
+
+							}
+						}
 						//2End////////////////////////////////////////////////////////////////////////
 
 						free(szModleFileBuf);
@@ -198,6 +250,11 @@ void getXcopyBat(char *CatListFile, char *objDir)
 					}
 					fclose(modelFP);
 					modelFP = NULL;
+				}
+				else
+				{
+					//该文件打不开，输出到错误流，szModel在此情况下是文件路径
+					fprintf(stderr, "%s\n", szModel);
 				}
 			}
 			//1End////////////////////////////////////////////////////////////////////////
