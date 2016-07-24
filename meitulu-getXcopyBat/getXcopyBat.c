@@ -160,7 +160,9 @@ void getXcopyBat(char *CatListFile, char *objDir)
 		int iCurChar = 0, iModelFileCurChar = 0, iAlbumFileCurChar = 0;
 		char szTemp[1024] = { '\0' },
 			szModel[1024] = { '\0' },
-			szAlbum[1024] = { '\0' };
+			szAlbum[1024] = { '\0' },
+			szJpg[1024] = { '\0' };
+		int iTemp = 0, jTemp = 0;
 		fseek(fp, 0, SEEK_END);
 		fileSize = ftell(fp);
 		fseek(fp, 0, SEEK_SET);
@@ -209,9 +211,9 @@ void getXcopyBat(char *CatListFile, char *objDir)
 								szTemp + strlen("http://"), 
 								strlen(szTemp) - strlen("http://") - strlen(".html"));
 							*(szAlbum + strlen(szTemp) - strlen("http://") - strlen(".html")) = '\0';
-							strcat(szAlbum, "-.txt");
-							printf("");
-
+// 							strcat(szAlbum, "-.txt");
+							sprintf(szTemp, "%s%s-.txt", objDir, szAlbum);
+							strcpy(szAlbum, szTemp);
 							albumFP = fopen(szAlbum, "rt");
 							if (NULL != albumFP)
 							{
@@ -226,7 +228,45 @@ void getXcopyBat(char *CatListFile, char *objDir)
 									albumFileSize = strlen(szAlbumFileBuf);
 
 									//3Start////////////////////////////////////////////////////////////////////////
+									iAlbumFileCurChar = 0;
+									//先读取前三行，并取出第二行的AlbumName
+									sscanf(szAlbumFileBuf + iAlbumFileCurChar,
+										"%*[^'\n']%*['\n']"
+										"%*s %[^'\n']%*['\n']"
+										"%*[^'\n']%*['\n']%n",
+										szTemp, &iAlbumFileCurChar);
+									//为保证批处理程序正常运行，应除去albumName中的所有空格
+									for (iTemp = 0, jTemp = 0; iTemp < (int)strlen(szTemp); ++iTemp)
+									{
+										if (*(szTemp + iTemp) == ' ')
+										{
+											continue;
+										}
+										*(szAlbum + jTemp++) = *(szTemp + iTemp);
+									}
+									for (; iAlbumFileCurChar < albumFileSize; )
+									{
+										sscanf(szAlbumFileBuf + iAlbumFileCurChar, "%[^'\n']", szTemp);
+										iAlbumFileCurChar += strlen(szTemp) + strlen("\n");
 
+										//Core Start////////////////////////////////////////////////////////////////////////
+										//szMode, szAlbum均齐备
+										//从szTemp中获得.jpg的文件名
+										for (szJpg[0] = '\0', iTemp = strlen(szTemp) - 1; iTemp >= 0; --iTemp)
+										{
+											if ('/' == *(szTemp + iTemp) )
+											{
+												strncpy(szJpg, szTemp + iTemp + 1, strlen(szTemp) - 1 - iTemp);
+												szJpg[strlen(szTemp) - 1 - iTemp] = '\0';
+												break;
+											}
+										}
+										fprintf(stdout, 
+											">>%%outdir%%xcopy.log.txt 2>>%%outdir%%xcopy.err.txt  "
+											"xcopy /D /C /Y %%indir%%%s %%outdir%%%s\\%s\\ \n", 
+											szJpg, szModel, szAlbum);
+										//Core End////////////////////////////////////////////////////////////////////////
+									}
 									//3End////////////////////////////////////////////////////////////////////////
 
 									free(szAlbumFileBuf);
