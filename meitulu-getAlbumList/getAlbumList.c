@@ -230,6 +230,7 @@ void writeAlbumURL(char *FilePath, FILE *outfp)
 					if (a1 >= 0 && a2 >= 0)
 					{
 						strncpy(szTemp, szInBuf + a1, a2 - a1);
+						szTemp[a2 - a1] = '\0';
 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
 					}
 				}
@@ -277,6 +278,7 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				if (a1 >= 0 && a2 >= 0)
 				{
 					strncpy(szModelName, szInBuf + a1, a2 - a1);
+					szModelName[a2 - a1] = '\0';
 					drunkUTF8ToGB2312(szModelName, szTemp);
 					sprintf(szOutBuf, "%sTitle: %s\n", szOutBuf, szTemp);
 

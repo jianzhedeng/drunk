@@ -235,15 +235,26 @@ void getXcopyBat(char *CatListFile, char *objDir)
 										"%*s %[^'\n']%*['\n']"
 										"%*[^'\n']%*['\n']%n",
 										szTemp, &iAlbumFileCurChar);
-									//为保证批处理程序正常运行，应除去albumName中的所有空格
+									//为保证批处理程序正常运行，应除去albumName中的所有空格和'/''\\'等
 									for (iTemp = 0, jTemp = 0; iTemp < (int)strlen(szTemp); ++iTemp)
 									{
-										if (*(szTemp + iTemp) == ' ')
+										if (*(szTemp + iTemp) == ' ' || 
+											*(szTemp + iTemp) == '/' || 
+											*(szTemp + iTemp) == '\\' || 
+											*(szTemp + iTemp) == ':' || 
+											*(szTemp + iTemp) == '*' || 
+											*(szTemp + iTemp) == '?' || 
+											*(szTemp + iTemp) == '"' || 
+											*(szTemp + iTemp) == '<' || 
+											*(szTemp + iTemp) == '>' || 
+											*(szTemp + iTemp) == '|' )
 										{
 											continue;
 										}
 										*(szAlbum + jTemp++) = *(szTemp + iTemp);
 									}
+									*(szAlbum + jTemp++) = '\0';
+
 									for (; iAlbumFileCurChar < albumFileSize; )
 									{
 										sscanf(szAlbumFileBuf + iAlbumFileCurChar, "%[^'\n']", szTemp);

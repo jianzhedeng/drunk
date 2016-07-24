@@ -247,6 +247,7 @@ void writeBasicInfo(char *FilePath, FILE *outfp)
 				if (a1 >= 0 && a2 >= 0)
 				{
 					strncpy(szAlbumName, szInBuf + a1, a2 - a1);
+					szAlbumName[a2 - a1] = '\0';
 					drunkUTF8ToGB2312(szAlbumName, szTemp);
 					drunkPushbackFormatStr(szOutBuf, "Title: %s\n", szTemp);
 					//get Album name , 用i2标记经过的空格数量
@@ -358,6 +359,7 @@ void writeImageURL(char *FilePath, FILE *outfp)
 					if (a1 >= 0 && a2 >= 0)
 					{
 						strncpy(szTemp, szInBuf + a1, a2 - a1);
+						szTemp[a2 - a1] = '\0';
 // 						sprintf(szOutBuf, "%s%s\n", szOutBuf, szTemp);
 						drunkPushbackFormatStr(szOutBuf, "%s\n", szTemp);
 					}
